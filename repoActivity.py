@@ -2,7 +2,7 @@ import json, time, datetime, subprocess, os, re
 
 settings = open("settings.txt", "r").read().replace("\n", "").split("|")
 username = re.findall("\"[A-z-0-9.]*\"", settings[0])[0][1:-1]
-webhook = re.findall("\"[A-z-0-9.://]*\"", settings[1])[0][1:-1]
+discord = re.findall("\"[A-z-0-9.://]*\"", settings[1])[0][1:-1]
 gitter = re.split(" / ", re.findall("[A-z-0-9]* / [A-z-0-9]*", settings[2])[0])
 repo = re.findall("\"[A-z-0-9/]*\"", settings[3])[0][1:-1]
 userdetails = re.findall("[A-z-0-9]*:[A-z-0-9]*", settings[4])[0]
@@ -16,7 +16,7 @@ log = 0
 timeGithub = 0
 timeFile = 0
 
-os.system('curl -s "https://api.github.com/repos/' + repo + '/events?page=6&per_page=1" -u ' + userdetails + ' > .githubapi')
+os.system('curl -s "https://api.github.com/repos/' + repo + '/events?page=1&per_page=1" -u ' + userdetails + ' > .githubapi')
 os.system('touch .githubrss.xml')
 
 rssfile = open(".githubrss.xml", "w")
@@ -27,13 +27,13 @@ while True:
 	if os.path.isfile(".githublastid") == True:	
 		id = open('.githublastid', 'r').read()
 	message = []
-	timeGithub = subprocess.check_output('curl -I -s --head "https://api.github.com/repos/' + repo + '/events?page=6&per_page=1" -u ' + userdetails + ' | grep -i "Last-Modified"', shell=True)[15:-6]
+	timeGithub = subprocess.check_output('curl -I -s --head "https://api.github.com/repos/' + repo + '/events?page=1&per_page=1" -u ' + userdetails + ' | grep -i "Last-Modified"', shell=True)[15:-6]
 	timeGithub = int(time.mktime(datetime.datetime.strptime(timeGithub, "%a, %d %b %Y %H:%M:%S").timetuple())) + 3600
 	timeFile = int(os.path.getmtime('.githubapi'))
 
 	if timeGithub > timeFile:
 		if os.path.isfile(".githubapi") == True:
-			os.system('curl -s "https://api.github.com/repos/' + repo + '/events?page=6&per_page=1" -u ' + userdetails + ' > .githubapi')
+			os.system('curl -s "https://api.github.com/repos/' + repo + '/events?page=1&per_page=1" -u ' + userdetails + ' > .githubapi')
 
 	apifile = open(".githubapi", 'r')
 	with apifile as json_file:
@@ -235,20 +235,20 @@ while True:
 
 	if len(message) > 0:
 		if "IssuesEvent" in data[-1]['type'] and (data[-1]['payload']['action'] == "reopened" or data[-1]['payload']['action'] == "closed"):
-			if webhook != "":
+			if discord != "":
 				if "discord" in hooks:
-					os.system("curl -H \"Content-Type: application/json\" -X POST -d \'{ \"embeds\": [ { \"title\": \"" + message[0] + message[5] + "\", \"url\": \"" + message[4] + "\", \"author\": { \"name\": \"" + message[1] + "\", \"icon_url\": \"" + message[2] + "\" } } ] }\' " + webhook)
-				if "gitter" in hooks:
-					os.system("curl -H \"Content-Type: application/json\" -H \"Authorization: Bearer " + gitter[0] + "\" \"https://api.gitter.im/v1/rooms/" + gitter[1] + "/chatMessages\" -X POST -d '{\"text\":\"[" + message[1] + "](https://github.com/" + message[1] + ")" + message[5] + message[6] + "\"}'")
+					os.system("curl -H \"Content-Type: application/json\" -X POST -d \'{ \"embeds\": [ { \"title\": \"" + message[0] + "\", \"url\": \"" + message[4] + "\", \"author\": { \"name\": \"" + message[1] + "\", \"icon_url\": \"" + message[2] + "\" } } ] }\' " + discord)
+			if "gitter" in hooks:
+				os.system("curl -H \"Content-Type: application/json\" -H \"Authorization: Bearer " + gitter[0] + "\" \"https://api.gitter.im/v1/rooms/" + gitter[1] + "/chatMessages\" -X POST -d '{\"text\":\"[" + message[1] + "](https://github.com/" + message[1] + ")" + message[5] + message[6] + "\"}'")
 			if "rss" in hooks:
 				rss = "<rss version=\"2.0\">\n<channel>\n<title>" + repo + "</title>\n<link>https://github.com/" + repo[0] + "</link><description>" + repo + "</description>\n<item>\n  <title>" + message[0] + "</title>\n   <author>" + message[1] + "</author>\n</item>\n</channel>\n</rss>"
 			print("\n\n" + message[0] + "\n" + message[1] + "\n\n")
 		else:
-			if webhook != "":
+			if discord != "":
 				if "discord" in hooks:
-					os.system("curl -H \"Content-Type: application/json\" -X POST -d \'{ \"embeds\": [ { \"title\": \"" + message[0] + message[5] + "\", \"url\": \"" + message[4] + "\", \"author\": { \"name\": \"" + message[1] + "\", \"icon_url\": \"" + message[2] + "\" }, \"description\": \"" + message[3] + "\" } ] }\' " + webhook)
-				if "gitter" in hooks:
-					os.system("curl -H \"Content-Type: application/json\" -H \"Authorization: Bearer " + gitter[0] + "\" \"https://api.gitter.im/v1/rooms/" + gitter[1] + "/chatMessages\" -X POST -d '{\"text\":\"[" + message[1] + "](https://github.com/" + message[1] + ")" + message[5] + message[6] + ":\\n" + message[3] + "\"}'")
+					os.system("curl -H \"Content-Type: application/json\" -X POST -d \'{ \"embeds\": [ { \"title\": \"" + message[0] + "\", \"url\": \"" + message[4] + "\", \"author\": { \"name\": \"" + message[1] + "\", \"icon_url\": \"" + message[2] + "\" }, \"description\": \"" + message[3] + "\" } ] }\' " + discord)
+			if "gitter" in hooks:
+				os.system("curl -H \"Content-Type: application/json\" -H \"Authorization: Bearer " + gitter[0] + "\" \"https://api.gitter.im/v1/rooms/" + gitter[1] + "/chatMessages\" -X POST -d '{\"text\":\"[" + message[1] + "](https://github.com/" + message[1] + ")" + message[5] + message[6] + ":\\n" + message[3] + "\"}'")
 			if "rss" in hooks:
 				rss = "<rss version=\"2.0\">\n<channel>\n<title>" + repo + "</title>\n<link>https://github.com/" + repo[0] + "</link><description>" + repo + "</description>\n<item>\n  <title>" + message[0] + "</title>\n  <link>" + message[4] + "</link>\n  <author>" + message[1] + "</author>\n  <description><![CDATA[" + rssmsg + "]]></description>\n</item>\n</channel>\n</rss>"
 			print("\n\n" + message[0] + "\n" + message[1] + "\n" + log + "\n\n")
@@ -263,4 +263,4 @@ while True:
 			lastid_file.write(id)
 
 	apifile.close()
-	time.sleep(5)
+	time.sleep(2.5)
