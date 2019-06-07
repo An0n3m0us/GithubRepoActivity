@@ -1,0 +1,6 @@
+username = "..." # Exclude your edits (add your username e.g An0n3m0us or leave as ... to not exclude your edits)
+|webhook = "" # Webhook URL (optional)
+|xxx / xxx # Gitter AuthorizationBearer/roomID
+|repo = "" # (User/Organization)/RepoName
+|xxx:xxx # GitHub username/password
+|discord gitter rss # Remove any you don't want
