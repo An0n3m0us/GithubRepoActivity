@@ -3,10 +3,11 @@ import json, time, datetime, subprocess, os, re
 settings = open("settings.txt", "r").read().replace("\n", "").split("|")
 username = re.findall("\"[A-z-0-9.]*\"", settings[0])[0][1:-1]
 discord = re.findall("\"[A-z-0-9.://]*\"", settings[1])[0][1:-1]
-gitter = re.split(" / ", re.findall("[A-z-0-9]* / [A-z-0-9]*", settings[2])[0])
-repo = re.findall("\"[A-z-0-9/]*\"", settings[3])[0][1:-1]
-userdetails = re.findall("[A-z-0-9]*:[A-z-0-9]*", settings[4])[0]
-hooks = settings[5].split(" #")[0]
+slack = re.findall("\"[A-z-0-9.://]*\"", settings[2])[0][1:-1]
+gitter = re.split(" / ", re.findall("[A-z-0-9]* / [A-z-0-9]*", settings[3])[0])
+repo = re.findall("\"[A-z-0-9/]*\"", settings[4])[0][1:-1]
+userdetails = re.findall("[A-z-0-9]*:[A-z-0-9]*", settings[5])[0]
+hooks = settings[6].split(" #")[0]
 
 id = 0
 message = []
@@ -24,7 +25,7 @@ with rssfile as rss_file:
 	rss_file.write("<rss version=\"2.0\"><title>" + repo + "</title></rss>")
 
 while True:
-	if os.path.isfile(".githublastid") == True:	
+	if os.path.isfile(".githublastid") == True:
 		id = open('.githublastid', 'r').read()
 	message = []
 	timeGithub = subprocess.check_output('curl -I -s --head "https://api.github.com/repos/' + repo + '/events?page=1&per_page=1" -u ' + userdetails + ' | grep -i "Last-Modified"', shell=True)[15:-6]
@@ -62,6 +63,7 @@ while True:
 			elif data[-1]['payload']['action'] == "opened":
 				message.append(" opened issue ")
 			message.append("[" + title + "](https://github.com/minetest/minetest_game/issues/" + str(event['number']) + ")")
+			message.append(int(time.mktime(datetime.datetime.strptime(event['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple())))
 
 			message[3] = message[3].replace("_-doublequote-_", '\\"').replace("_-apostrophe-_", "'\\''")
 
@@ -100,6 +102,7 @@ while True:
 			message.append(comment['html_url'])
 			message.append(" commented on ")
 			message.append("[" + title + "](" + str(comment['html_url']) + ")" + " [#" + str(event['number']) + "](https://github.com/minetest/minetest_game/pull/" + str(event['number']) + ")")
+			message.append(int(time.mktime(datetime.datetime.strptime(comment['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple())))
 
 			message[3] = re.sub("\![A-z0-9]*", " ", message[3])
 
@@ -144,6 +147,7 @@ while True:
 			elif data[-1]['payload']['action'] == "opened":
 				message.append(" opened pull request ")
 			message.append("[" + title + "](https://github.com/minetest/minetest_game/pull/" + str(event['number']) + ")")
+			message.append(int(time.mktime(datetime.datetime.strptime(event['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple())))
 
 			message[3] = message[3].replace("_-doublequote-_", '\\"').replace("_-apostrophe-_", "'\\''")
 
@@ -188,6 +192,7 @@ while True:
 			message.append(reviewer['html_url'])
 			message.append(" reviewed pull request ")
 			message.append("[" + title + "](" + str(comment['html_url']) + ")")
+			message.append(int(time.mktime(datetime.datetime.strptime(reviewer['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple())))
 
 			if message[3] == "":
 				message[3] = "_No description provided._"
@@ -221,6 +226,7 @@ while True:
 			message.append("https://github.com/" + repo + "/commit/" + commit['sha'])
 			message.append(" pushed to ")
 			message.append(event['repo']['name'])
+			message.append(int(time.mktime(datetime.datetime.strptime(data[-1]['payload']['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple())))
 
 			if message[3] == "":
 				message[3] = "_No description provided._"
@@ -240,6 +246,9 @@ while True:
 					os.system("curl -H \"Content-Type: application/json\" -X POST -d \'{ \"embeds\": [ { \"title\": \"" + message[0] + "\", \"url\": \"" + message[4] + "\", \"author\": { \"name\": \"" + message[1] + "\", \"icon_url\": \"" + message[2] + "\" } } ] }\' " + discord)
 			if "gitter" in hooks:
 				os.system("curl -H \"Content-Type: application/json\" -H \"Authorization: Bearer " + gitter[0] + "\" \"https://api.gitter.im/v1/rooms/" + gitter[1] + "/chatMessages\" -X POST -d '{\"text\":\"[" + message[1] + "](https://github.com/" + message[1] + ")" + message[5] + message[6] + "\"}'")
+			if "slack" in hooks:
+				jsonSlack = "{ \"attachments\": [ { \"author_name\": \"" + message[1] + "\", \"author_link\": \"https://github.com/" + message[1] + "\", \"author_icon\": \"" + message[2] + "\", \"title\": \"" + message[0] + "\", \"title_link\": \"" + message[4] + "\", \"footer\": \"GitHub\", \"footer_icon\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\", \"ts\": \"" + str(message[7]) + "\" } ] } "
+				os.system("curl -X POST -H \"Content-type: application/json\" --data '" + jsonSlack + "' " + slack)
 			if "rss" in hooks:
 				rss = "<rss version=\"2.0\">\n<channel>\n<title>" + repo + "</title>\n<link>https://github.com/" + repo[0] + "</link><description>" + repo + "</description>\n<item>\n  <title>" + message[0] + "</title>\n   <author>" + message[1] + "</author>\n</item>\n</channel>\n</rss>"
 			print("\n\n" + message[0] + "\n" + message[1] + "\n\n")
@@ -249,6 +258,9 @@ while True:
 					os.system("curl -H \"Content-Type: application/json\" -X POST -d \'{ \"embeds\": [ { \"title\": \"" + message[0] + "\", \"url\": \"" + message[4] + "\", \"author\": { \"name\": \"" + message[1] + "\", \"icon_url\": \"" + message[2] + "\" }, \"description\": \"" + message[3] + "\" } ] }\' " + discord)
 			if "gitter" in hooks:
 				os.system("curl -H \"Content-Type: application/json\" -H \"Authorization: Bearer " + gitter[0] + "\" \"https://api.gitter.im/v1/rooms/" + gitter[1] + "/chatMessages\" -X POST -d '{\"text\":\"[" + message[1] + "](https://github.com/" + message[1] + ")" + message[5] + message[6] + ":\\n" + message[3] + "\"}'")
+			if "slack" in hooks:
+				jsonSlack = "{ \"attachments\": [ { \"author_name\": \"" + message[1] + "\", \"author_link\": \"https://github.com/" + message[1] + "\", \"author_icon\": \"" + message[2] + "\", \"title\": \"" + message[0] + "\", \"title_link\": \"" + message[4] + "\", \"text\": \"" + message[3][:-1].replace("*Labels", "_Labels") + "_\", \"footer\": \"GitHub\", \"footer_icon\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\", \"ts\": \"" + str(message[7]) + "\" } ] } "
+				os.system("curl -X POST -H \"Content-type: application/json\" --data '" + jsonSlack + "' " + slack)
 			if "rss" in hooks:
 				rss = "<rss version=\"2.0\">\n<channel>\n<title>" + repo + "</title>\n<link>https://github.com/" + repo[0] + "</link><description>" + repo + "</description>\n<item>\n  <title>" + message[0] + "</title>\n  <link>" + message[4] + "</link>\n  <author>" + message[1] + "</author>\n  <description><![CDATA[" + rssmsg + "]]></description>\n</item>\n</channel>\n</rss>"
 			print("\n\n" + message[0] + "\n" + message[1] + "\n" + log + "\n\n")
