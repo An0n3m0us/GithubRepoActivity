@@ -1,6 +1,6 @@
 # GithubRepoActivity
 
-Python script that uses the Github API to follow the activity of a repository then converts it into a WebHook format (for Discord and Slack) and an RSS feed file.
+Python script that uses the Github API to follow the activity of a repository then converts it into a WebHook format (for Discord, Slack and Gitter) and an RSS feed file.
 
 Tested on Linux (it should work on Mac and Windows)
 
