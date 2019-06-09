@@ -10,6 +10,14 @@ Example using the `minetest/minetest_game` repo:
 
 ![img](https://raw.githubusercontent.com/An0n3m0us/GithubRepoActivity/master/.img.png)
 
+# Apps supported
+
+Discord
+
+Slack
+
+RSS
+
 ## Events
 
 ### Supported
@@ -25,6 +33,10 @@ PullRequestReviewCommentEvent (diffs)
 PushEvent (commits pushed to repo)
 
 ### Not supported
+
+Multiple commits in a push (TODO)
+
+Receiving multiple messages (TODO)
 
 Edited issues & comments, pull request & comments (no global API event)
 
