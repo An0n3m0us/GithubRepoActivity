@@ -59,8 +59,8 @@ rss = """<rss version="2.0">
 """
 
 id = 0
-# [0]AuthorName, [1]AuthorLink, [2]AuthorIcon, ([3]Action, [4]ID, [5]Title), [6]TitleLink, ([7]Text, [[8][0]labelsSlack, [8][1]labelsDiscord), [9]TimeCreated, [10]Color
-message = ["", "", "", "", "", "", "", "", ["", ""], 0, ""]
+# [0]AuthorName, [1]AuthorLink, [2]AuthorIcon, ([3]Action, [4]ID, [5]Title), [6]TitleLink, ([7]Text, [[8][0]labelsSlack, [8][1]labelsDiscord), ([9][0]TimestampCreated, [9][1]TimeCreated), [10]Color
+message = ["", "", "", "", "", "", "", "", ["", ""], [0, ""], ""]
 log = 0
 timeGithub = 0
 timeFile = 0
@@ -130,10 +130,11 @@ while True:
 				for i in range(len(issue['labels'])):
 					message[8][0] = message[8][0] + issue['labels'][i]['name'] + ", "
 					message[8][1] = message[8][1] + issue['labels'][i]['name'] + ", "
-				message[8][0] = repr("\\n\\n")[1:-1] + message[8][0][:-2] + "_"
-				message[8][1] = repr("\\n\\n")[1:-1] + message[8][1][:-2] + "*"
+				message[8][0] = repr("\\n")[1:-1] + message[8][0][:-2] + "_"
+				message[8][1] = repr("\\n")[1:-1] + message[8][1][:-2] + "*"
 
-			message[9] = int(time.mktime(datetime.datetime.strptime(issue['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][0] = int(time.mktime(datetime.datetime.strptime(issue['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][1] = datetime.datetime.strptime(issue['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").strftime('+%d %b at %H:%M')
 
 		if "IssueCommentEvent" in data[0]['type'] and data[0]['id'] != id and data[0]['payload']['comment']:
 			id = data[0]['id']
@@ -171,10 +172,11 @@ while True:
 				for i in range(len(issue['labels'])):
 					message[8][0] = message[8][0] + issue['labels'][i]['name'] + ", "
 					message[8][1] = message[8][1] + issue['labels'][i]['name'] + ", "
-				message[8][0] = repr("\\n\\n")[1:-1] + message[8][0][:-2] + "_"
-				message[8][1] = repr("\\n\\n")[1:-1] + message[8][1][:-2] + "*"
+				message[8][0] = repr("\\n")[1:-1] + message[8][0][:-2] + "_"
+				message[8][1] = repr("\\n")[1:-1] + message[8][1][:-2] + "*"
 
-			message[9] = int(time.mktime(datetime.datetime.strptime(comment['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][0] = int(time.mktime(datetime.datetime.strptime(comment['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][1] = datetime.datetime.strptime(comment['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").strftime('%d %b at %H:%M')
 
 		if "PullRequestEvent" in data[0]['type'] and data[0]['id'] != id:
 			id = data[0]['id']
@@ -225,10 +227,11 @@ while True:
 				for i in range(len(pull['labels'])):
 					message[8][0] = message[8][0] + pull['labels'][i]['name'] + ", "
 					message[8][1] = message[8][1] + pull['labels'][i]['name'] + ", "
-				message[8][0] = repr("\\n\\n")[1:-1] + message[8][0][:-2] + "_"
-				message[8][1] = repr("\\n\\n")[1:-1] + message[8][1][:-2] + "*"
+				message[8][0] = repr("\\n")[1:-1] + message[8][0][:-2] + "_"
+				message[8][1] = repr("\\n")[1:-1] + message[8][1][:-2] + "*"
 
-			message[9] = int(time.mktime(datetime.datetime.strptime(pull['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][0] = int(time.mktime(datetime.datetime.strptime(pull['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][1] = datetime.datetime.strptime(pull['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").strftime('%d %b at %H:%M')
 
 		if "PullRequestReviewCommentEvent" in data[0]['type'] and data[0]['id'] != id and data[0]['payload']['comment']:
 			id = data[0]['id']
@@ -267,10 +270,11 @@ while True:
 				for i in range(len(pull['labels'])):
 					message[8][0] = message[8][0] + pull['labels'][i]['name'] + ", "
 					message[8][1] = message[8][1] + pull['labels'][i]['name'] + ", "
-				message[8][0] = repr("\\n\\n")[1:-1] + message[8][0][:-2] + "_"
-				message[8][1] = repr("\\n\\n")[1:-1] + message[8][1][:-2] + "*"
+				message[8][0] = repr("\\n")[1:-1] + message[8][0][:-2] + "_"
+				message[8][1] = repr("\\n")[1:-1] + message[8][1][:-2] + "*"
 
-			message[9] = int(time.mktime(datetime.datetime.strptime(pull['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][0] = int(time.mktime(datetime.datetime.strptime(review['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][1] = datetime.datetime.strptime(review['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").strftime('%d %b at %H:%M')
 
 		if "PushEvent" in data[0]['type'] and data[0]['id'] != id:
 			id = data[0]['id']
@@ -291,7 +295,8 @@ while True:
 				commit['message'] = re.sub("#[0-9][0-9]*", code, commit['message'], 1)
 
 			message[7] = repr(str(commit['message']))
-			message[9] = int(time.mktime(datetime.datetime.strptime(event['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][0] = int(time.mktime(datetime.datetime.strptime(event['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").timetuple()))
+			message[9][1] = datetime.datetime.strptime(event['created_at'][:-1], "%Y-%m-%dT%H:%M:%S").strftime('%d %b at %H:%M')
 
 	slackJson = re.sub("\"author_name\": \"AUTHORNAME\"", "\"author_name\": \"" + message[0] + "\"", slackJson)
 	slackJson = re.sub("\"author_link\": \"AUTHORLINK\"", "\"author_link\": \"" + message[1] + "\"", slackJson)
@@ -304,7 +309,7 @@ while True:
 	else:
 		slackJson = re.sub("\"text\": \"TEXT\"", "\"text\": \"" + repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "_No description provided._") + "\"", slackJson)
 		slackJson = re.sub("\"text\": \"LABELS\"", "\"text\": \"" + str(message[8][0]) + "\"", slackJson)
-	slackJson = re.sub("\"ts\": TS", "\"ts\": " + str(message[9]), slackJson)
+	slackJson = re.sub("\"ts\": TS", "\"ts\": " + str(message[9][0]), slackJson)
 	slackJson = re.sub("\"color\": \"COLOR\"", "\"color\": \"" + str(message[10]) + "\"", slackJson)
 	slackJson = slackJson.replace("\n", "")
 
@@ -313,13 +318,16 @@ while True:
 	discordJson = re.sub("\"title\": \"TITLE\"", "\"title\": \"" + message[3] + message[4] + message[5] + "\"", discordJson)
 	discordJson = re.sub("\"url\": \"URL\"", "\"url\": \"" + message[6] + "\"", discordJson)
 	if ("IssuesEvent" in data[0]['type'] or "PullRequestEvent" in data[0]['type']) and (data[0]['payload']['action'] == "reopened" or data[0]['payload']['action'] == "closed"):
-		discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + str(message[8][1]) + "\"", discordJson)
+		discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + "*Github | " + message[9][1] + "*" + str(message[8][1]) + "\"", discordJson)
 	else:
-		discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "*No description provided.*") + str(message[8][1]) + "\"", discordJson)
+		discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "*No description provided.*") + "\\\\n\\\\n*Github | " + message[9][1] + "*" + str(message[8][1]) + "\"", discordJson)
 	discordJson = discordJson.replace("\n", "")
 
-	gitterJson = re.sub("\"text\":\"\[TITLE\]", "\"text\":\"[" + message[0] + "](" + message[1] + ") " + message[3].lower() + " [" + message[4][1:-1] + "](" + re.findall("https://github.com/minetest/minetest_game/[A-z]*/[0-9][0-9]*", message[6])[0] + ") [" + message[5] + "](" + message[6] + ")", gitterJson)
-	gitterJson = re.sub("TEXT", repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "_No description provided._") + str(message[8][1]), gitterJson)
+	gitterJson = re.sub("\"text\":\"\[TITLE\]", "\"text\":\"[" + message[0] + "](" + message[1] + ") " + message[3].lower() + " [" + message[4][1:-1] + "](" + re.findall("https://github.com/" + repo + "/[A-z]*/[0-9][0-9]*", message[6])[0] + ") [" + message[5] + "](" + message[6] + ")", gitterJson)
+	if ("IssuesEvent" in data[0]['type'] or "PullRequestEvent" in data[0]['type']) and (data[0]['payload']['action'] == "reopened" or data[0]['payload']['action'] == "closed"):
+		gitterJson = re.sub("TEXT", "\\\\n\\\\n*Github | " + message[9][1] + "*" + str(message[8][1]), gitterJson)
+	else:
+		gitterJson = re.sub("TEXT", repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "_No description provided._") + "\\\\n\\\\n*Github | " + message[9][1] + "*" + str(message[8][1]), gitterJson)
 	gitterJson = gitterJson.replace("\n", "")
 
 	rss = re.sub("<title>REPOTITLE</title>", "<title>" + repo + "</title>", rss)
@@ -327,9 +335,9 @@ while True:
 	rss = re.sub("<link>REPOLINK</link>", "<link>https://github.com/" + repo + "</link>", rss)
 	rss = re.sub("<title>TITLE</title>", "<title>" + message[3] + message[4] + message[5] + "</title>", rss)
 	rss = re.sub("<link>LINK</link>", "<link>" + message[6] + "</link>", rss)
-	rss = re.sub("\<description\>\<\!\[CDATA\[DESC", "<description><![CDATA[" + message[7].replace("\\n", "<br>").replace("\\r", "")[2:-2].replace("No description provided.", "*No description provided.*") + str(message[8][1].replace("\\\\n", "<br>").replace("*", "")) + "</description>", rss)
+	rss = re.sub("\<description\>\<\!\[CDATA\[DESC", "<description><![CDATA[" + message[7].replace("\\n", "<br>").replace("\\r", "")[2:-2].replace("No description provided.", "*No description provided.*") + "<br><br>Github | " + message[9][1] + "" + str(message[8][1].replace("\\\\n", "<br>").replace("*", "")) + "</description>", rss)
 
-	if message[9] != 0:
+	if message[9][0] != 0:
 		if "slack" in hooks:
 			subprocess.check_output("curl -X POST -H \"Content-type: application/json\" --data '" + slackJson + "' " + slack, shell=True)[:-1]
 		if "discord" in hooks:
@@ -347,5 +355,5 @@ while True:
 		with lastid as lastid_file:
 			lastid_file.write(id)
 
-	message = ["", "", "", "", "", "", "", "", ["", ""], 0, ""]
+	message = ["", "", "", "", "", "", "", "", ["", ""], [0, ""], ""]
 	time.sleep(2.5)
