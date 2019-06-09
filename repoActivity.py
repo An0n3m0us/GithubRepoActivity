@@ -19,10 +19,12 @@ slackJson = """{
 "text": "TEXT",
 "footer": "GitHub",
 "footer_icon": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-"ts": TS
+"ts": TS,
+"color": "COLOR"
 },
 {
-"text": "LABELS"
+"text": "LABELS",
+"color": "COLOR"
 }
 ]}
 """
@@ -53,14 +55,16 @@ rss = """<rss version="2.0">
 """
 
 id = 0
-# [0]AuthorName, [1]AuthorLink, [2]AuthorIcon, ([3]Action, [4]ID, [5]Title), [6]TitleLink, ([7]Text, [[8][0]labelsSlack, [8][1]labelsDiscord), [9]TimeCreated
-message = ["", "", "", "", "", "", "", "", ["", ""], 0]
+# [0]AuthorName, [1]AuthorLink, [2]AuthorIcon, ([3]Action, [4]ID, [5]Title), [6]TitleLink, ([7]Text, [[8][0]labelsSlack, [8][1]labelsDiscord), [9]TimeCreated, [10]Color
+message = ["", "", "", "", "", "", "", "", ["", ""], 0, ""]
 log = 0
 timeGithub = 0
 timeFile = 0
 
 os.system('curl -s "https://api.github.com/repos/' + repo + '/events?page=1&per_page=1" -u ' + userdetails + ' > .githubapi')
-os.system('touch .githubrss.xml')
+
+if "rss" in hooks:
+	os.system('touch .githubrss.xml')
 
 while True:
 	if os.path.isfile(".githublastid") == True:
@@ -88,8 +92,10 @@ while True:
 
 			if payload['action'] == "opened":
 				message[3] = "Opened issue"
+				message[10] = "#2cbe4e"
 			elif payload['action'] == "closed":
 				message[3] = "Closed issue"
+				message[10] = "#cb2431"
 			elif payload['action'] == "reopened":
 				message[3] = "Reopened issue"
 
@@ -177,8 +183,14 @@ while True:
 
 			if payload['action'] == "opened":
 				message[3] = "Opened pull request"
+				message[10] = "#2cbe4e"
 			elif payload['action'] == "closed":
-				message[3] = "Closed pull request"
+				if pull['merged_at'] == None:
+					message[3] = "Closed pull request"
+					message[10] = "#cb2431"
+				else:
+					message[3] = "Merged pull request"
+					message[10] = "#6f42c1"
 			elif payload['action'] == "reopened":
 				message[3] = "Reopened pull request"
 
@@ -282,23 +294,22 @@ while True:
 	slackJson = re.sub("\"author_icon\": \"AUTHORICON\"", "\"author_icon\": \"" + message[2] + "\"", slackJson)
 	slackJson = re.sub("\"title\": \"TITLE\"", "\"title\": \"" + message[3] + message[4] + message[5] + "\"", slackJson)
 	slackJson = re.sub("\"title_link\": \"TITLELINK\"", "\"title_link\": \"" + message[6] + "\"", slackJson)
-	if "IssuesEvent" in data[0]['type'] or "PullRequestEvent" in data[0]['type']:
-		if data[0]['payload']['action'] == "reopened" or data[0]['payload']['action'] == "closed":
-			slackJson = re.sub("\"text\": \"TEXT\"", "\"text\": \"" + " " + "\"", slackJson)
-			slackJson = re.sub("\"text\": \"LABELS\"", "\"text\": \"" + str(message[8][0]) + "\"", slackJson)
+	if ("IssuesEvent" in data[0]['type'] or "PullRequestEvent" in data[0]['type']) and (data[0]['payload']['action'] == "reopened" or data[0]['payload']['action'] == "closed"):
+		slackJson = re.sub("\"text\": \"TEXT\"", "\"text\": \"" + " " + "\"", slackJson)
+		slackJson = re.sub("\"text\": \"LABELS\"", "\"text\": \"" + str(message[8][0]) + "\"", slackJson)
 	else:
 		slackJson = re.sub("\"text\": \"TEXT\"", "\"text\": \"" + repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "_No description provided._") + "\"", slackJson)
 		slackJson = re.sub("\"text\": \"LABELS\"", "\"text\": \"" + str(message[8][0]) + "\"", slackJson)
 	slackJson = re.sub("\"ts\": TS", "\"ts\": " + str(message[9]), slackJson)
+	slackJson = re.sub("\"color\": \"COLOR\"", "\"color\": \"" + str(message[10]) + "\"", slackJson)
 	slackJson = slackJson.replace("\n", "")
 
 	discordJson = re.sub("\"name\": \"NAME\"", "\"name\": \"" + message[0] + "\"", discordJson)
 	discordJson = re.sub("\"icon_url\": \"ICON\"", "\"icon_url\": \"" + message[2] + "\"", discordJson)
 	discordJson = re.sub("\"title\": \"TITLE\"", "\"title\": \"" + message[3] + message[4] + message[5] + "\"", discordJson)
 	discordJson = re.sub("\"url\": \"URL\"", "\"url\": \"" + message[6] + "\"", discordJson)
-	if "IssuesEvent" in data[0]['type'] or "PullRequestEvent" in data[0]['type']:
-		if data[0]['payload']['action'] == "reopened" or data[0]['payload']['action'] == "closed":
-			discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + str(message[8][1]) + "\"", discordJson)
+	if ("IssuesEvent" in data[0]['type'] or "PullRequestEvent" in data[0]['type']) and (data[0]['payload']['action'] == "reopened" or data[0]['payload']['action'] == "closed"):
+		discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + str(message[8][1]) + "\"", discordJson)
 	else:
 		discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "*No description provided.*") + str(message[8][1]) + "\"", discordJson)
 	discordJson = discordJson.replace("\n", "")
@@ -326,5 +337,5 @@ while True:
 		with lastid as lastid_file:
 			lastid_file.write(id)
 
-	message = ["", "", "", "", "", "", "", "", ["", ""], 0]
+	message = ["", "", "", "", "", "", "", "", ["", ""], 0, ""]
 	time.sleep(2.5)
