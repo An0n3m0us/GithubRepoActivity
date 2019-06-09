@@ -1,22 +1,12 @@
 # GithubRepoActivity
 
-Python script that uses the Github API to follow the activity of a repository then converts it into a WebHook format (for Discord, RocketChat and so on) and an RSS feed file.
+Python script that uses the Github API to follow the activity of a repository then converts it into a WebHook format (for Discord and Slack) and an RSS feed file.
 
 Tested on Linux (it should work on Mac and Windows)
 
-Example using the `minetest/minetest_game` repo:
-
-(Only some events are shown)
+Example of the `IssueCommentEvent` event using the `minetest/minetest_game` repo:
 
 ![img](https://raw.githubusercontent.com/An0n3m0us/GithubRepoActivity/master/.img.png)
-
-# Apps supported
-
-Discord
-
-Slack
-
-RSS
 
 ## Events
 

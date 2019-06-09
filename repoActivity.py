@@ -1,6 +1,6 @@
 import json, time, datetime, subprocess, os, re
 
-settings = open("settings-other.txt", "r").read().replace("\n", "").split("|")
+settings = open("settings.txt", "r").read().replace("\n", "").split("|")
 username = re.findall("\"[A-z-0-9.]*\"", settings[0])[0][1:-1]
 discord = re.findall("\"[A-z-0-9.://]*\"", settings[1])[0][1:-1]
 slack = re.findall("\"[A-z-0-9.://]*\"", settings[2])[0][1:-1]
@@ -308,13 +308,13 @@ while True:
 	rss = re.sub("<link>REPOLINK</link>", "<link>https://github.com/" + repo + "</link>", rss)
 	rss = re.sub("<title>TITLE</title>", "<title>" + message[3] + message[4] + message[5] + "</title>", rss)
 	rss = re.sub("<link>LINK</link>", "<link>" + message[6] + "</link>", rss)
-	rss = re.sub("\<description\>\<\!\[CDATA\[DESC", "<description><![CDATA[" + repr(message[7].replace("\\n", "<br>").replace("\\r", ""))[2:-2].replace("'", "\u0027").replace("No description provided.", "*No description provided.*") + str(message[8][1].replace("\\\\n", "<br>").replace("\\r", "")) + "</description>", rss)
+	rss = re.sub("\<description\>\<\!\[CDATA\[DESC", "<description><![CDATA[" + message[7].replace("\\n", "<br>").replace("\\r", "")[2:-2].replace("No description provided.", "*No description provided.*") + str(message[8][1].replace("\\\\n", "<br>").replace("*", "")) + "</description>", rss)
 
 	if message[9] != 0:
-		#if "slack" in hooks:
-			#subprocess.check_output("curl -X POST -H \"Content-type: application/json\" --data '" + slackJson + "' " + slack, shell=True)[:-1]
-		#if "discord" in hooks:
-			#subprocess.check_output("curl -H \"Content-Type: application/json\" -X POST -d '" + discordJson + "' " + discord, shell=True)[:-1]
+		if "slack" in hooks:
+			subprocess.check_output("curl -X POST -H \"Content-type: application/json\" --data '" + slackJson + "' " + slack, shell=True)[:-1]
+		if "discord" in hooks:
+			subprocess.check_output("curl -H \"Content-Type: application/json\" -X POST -d '" + discordJson + "' " + discord, shell=True)[:-1]
 		if "rss" in hooks:
 			rssfile = open(".githubrss.xml", "w")
 			with rssfile as rss_file:
