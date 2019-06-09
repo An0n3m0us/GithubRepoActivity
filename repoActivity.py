@@ -40,6 +40,10 @@ discordJson = """{"embeds": [{
 }]}
 """
 
+gitterJson = """{
+"text":"[TITLE]:\\nTEXT"
+}"""
+
 rss = """<rss version="2.0">
 <channel>
 <title>REPOTITLE</title>
@@ -87,7 +91,7 @@ while True:
 			issue = data[0]['payload']['issue']
 
 			message[0] = str(issue['user']['login'])
-			message[1] = str(issue['user']['url'])
+			message[1] = str(issue['user']['html_url'])
 			message[2] = str(issue['user']['avatar_url'])
 
 			if payload['action'] == "opened":
@@ -137,7 +141,7 @@ while True:
 			comment = data[0]['payload']['comment']
 
 			message[0] = str(comment['user']['login'])
-			message[1] = str(comment['user']['url'])
+			message[1] = str(comment['user']['html_url'])
 			message[2] = str(comment['user']['avatar_url'])
 			message[3] = "Commented on"
 			message[4] = " #" + str(issue['number']) + " "
@@ -178,7 +182,7 @@ while True:
 			pull = data[0]['payload']['pull_request']
 
 			message[0] = str(pull['user']['login'])
-			message[1] = str(pull['user']['url'])
+			message[1] = str(pull['user']['html_url'])
 			message[2] = str(pull['user']['avatar_url'])
 
 			if payload['action'] == "opened":
@@ -233,7 +237,7 @@ while True:
 			review = data[0]['payload']['comment']
 
 			message[0] = str(review['user']['login'])
-			message[1] = str(review['user']['url'])
+			message[1] = str(review['user']['html_url'])
 			message[2] = str(review['user']['avatar_url'])
 			message[3] = "Reviewed pull request"
 			message[4] = " #" + str(pull['number']) + " "
@@ -274,7 +278,7 @@ while True:
 			commit = data[0]['payload']['commits'][0]
 
 			message[0] = str(event['actor']['login'])
-			message[1] = str(event['actor']['url'])
+			message[1] = str(event['actor']['html_url'])
 			message[2] = str(event['actor']['avatar_url'])
 			message[3] = "Pushed"
 			message[4] = " to "
@@ -314,6 +318,10 @@ while True:
 		discordJson = re.sub("\"description\": \"DESC\"", "\"description\": \"" + repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "*No description provided.*") + str(message[8][1]) + "\"", discordJson)
 	discordJson = discordJson.replace("\n", "")
 
+	gitterJson = re.sub("\"text\":\"\[TITLE\]", "\"text\":\"[" + message[0] + "](" + message[1] + ") " + message[3].lower() + " [" + message[4][1:-1] + "](" + re.findall("https://github.com/minetest/minetest_game/[A-z]*/[0-9][0-9]*", message[6])[0] + ") [" + message[5] + "](" + message[6] + ")", gitterJson)
+	gitterJson = re.sub("TEXT", repr(message[7])[2:-2].replace("'", "\u0027").replace("No description provided.", "_No description provided._") + str(message[8][1]), gitterJson)
+	gitterJson = gitterJson.replace("\n", "")
+
 	rss = re.sub("<title>REPOTITLE</title>", "<title>" + repo + "</title>", rss)
 	rss = re.sub("<author>AUTHORNAME</author>", "<author>" + message[0] + "</author>", rss)
 	rss = re.sub("<link>REPOLINK</link>", "<link>https://github.com/" + repo + "</link>", rss)
@@ -326,6 +334,8 @@ while True:
 			subprocess.check_output("curl -X POST -H \"Content-type: application/json\" --data '" + slackJson + "' " + slack, shell=True)[:-1]
 		if "discord" in hooks:
 			subprocess.check_output("curl -H \"Content-Type: application/json\" -X POST -d '" + discordJson + "' " + discord, shell=True)[:-1]
+		if "gitter" in hooks:
+			subprocess.check_output("curl -H \"Content-Type: application/json\" -H \"Accept: application/json\" -H \"Authorization: Bearer " + gitter[0] + "\" \"https://api.gitter.im/v1/rooms/" + gitter[1] + "/chatMessages\" -X POST -d '" + gitterJson + "'", shell=True)[:-1]
 		if "rss" in hooks:
 			rssfile = open(".githubrss.xml", "w")
 			with rssfile as rss_file:
